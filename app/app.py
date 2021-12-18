@@ -41,7 +41,7 @@ def getPayload(request):
         else:
             con.protocol_version = ldap.VERSION3
             con.set_option(ldap.OPT_REFERRALS, 0)
-            con.set_option(ldap.OPT_NETWORK_TIMEOUT, 3.0)
+            con.set_option(ldap.OPT_NETWORK_TIMEOUT, 2.0)
             try:
                 con.simple_bind_s()
             except:
