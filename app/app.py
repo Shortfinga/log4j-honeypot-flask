@@ -130,6 +130,7 @@ def reportHit(request):
         report['src_ip'] = request.remote_addr
         report['timestamp'] = datetime.now().isoformat()
         report['sensor'] = config['DEFAULT']['name']
+        report['full_path'] = request.full_path
 
         es.index(
             index=config['ELASTICSEARCH']['index'], doc_type='_doc', document=report, pipeline=config['ELASTICSEARCH']['pipeline']
