@@ -166,6 +166,7 @@ def homepage():
     else:
         if exploited:
             reportHit(request)
+            return render_template('uwu.html')
         return render_template('index.html')
 
 
