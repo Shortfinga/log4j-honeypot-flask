@@ -14,6 +14,7 @@ RUN apt-get install -y build-essential python3-dev python2.7-dev libldap2-dev li
 # We copy just the requirements.txt first to leverage Docker cache
 COPY requirements.txt requirements.txt
 RUN mkdir payloads
+
 ADD ./payloads /home/log4jhp/payloads
 RUN python3 -m venv venv
 RUN venv/bin/pip install -r requirements.txt
