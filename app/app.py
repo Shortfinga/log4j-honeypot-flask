@@ -125,8 +125,10 @@ def reportHit(request):
         for header in request.headers:
             report[header[0]] = str(header[1])
         if request.form.items():
+            #cdict = {request.form.items().name: request.form.items().value for c in request.form.items()}
+            #['fields'] = request.form.items()
             for fieldname, value in request.form.items():
-                report[fieldname] = report[value]
+                report[fieldname] = str(value)
         report['src_ip'] = request.remote_addr
         report['timestamp'] = datetime.now().isoformat()
         report['sensor'] = config['DEFAULT']['name']
@@ -150,13 +152,13 @@ def homepage():
             getPayload(request.args.get(var))
             exploited = True
     for header in request.headers:
-        print(header)
+        #pprint.pprint(header)
         if re.search(regex, str(header[1])):
             getPayload(header[1])
             exploited = True
     if request.method == 'POST':
         for fieldname, value in request.form.items():
-            print(value)
+            #pprint.pprint(fieldname + ': ' + value)
             if re.search(regex, str(value)):
                 payload = getPayload(value)
                 exploited = True
