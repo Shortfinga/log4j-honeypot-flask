@@ -11,6 +11,7 @@ import ldap
 import socket
 from typing import Any
 from datetime import datetime
+import urllib
 
 def read_conf():
     config = configparser.ConfigParser()
@@ -150,13 +151,13 @@ def homepage():
             getPayload(request.args.get(var))
             exploited = True
     for header in request.headers:
-        print(header)
+        print(urllib.urlencode(header.decode('utf-8', 'ignore')))
         if re.search(regex, str(header[1])):
             getPayload(header[1])
             exploited = True
     if request.method == 'POST':
         for fieldname, value in request.form.items():
-            print(value)
+            print(urllib.urlencode(value.decode('utf-8', 'ignore')))
             if re.search(regex, str(value)):
                 payload = getPayload(value)
                 exploited = True
