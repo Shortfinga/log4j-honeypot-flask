@@ -125,7 +125,8 @@ def reportHit(request):
         for header in request.headers:
             report[header[0]] = str(header[1])
         if request.form.items():
-            report['fields'] = request.form.items()
+            cdict = {request.form.items().name: request.form.items().value for c in request.form.items()}
+            #['fields'] = request.form.items()
             #for fieldname, value in request.form.items():
             #    report[str(fieldname)] = report[str(value)]
         report['src_ip'] = request.remote_addr
