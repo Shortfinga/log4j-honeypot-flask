@@ -152,13 +152,13 @@ def homepage():
             getPayload(request.args.get(var))
             exploited = True
     for header in request.headers:
-        pprint.pprint(header)
+        #pprint.pprint(header)
         if re.search(regex, str(header[1])):
             getPayload(header[1])
             exploited = True
     if request.method == 'POST':
         for fieldname, value in request.form.items():
-            pprint.pprint(fieldname + ': ' + value)
+            #pprint.pprint(fieldname + ': ' + value)
             if re.search(regex, str(value)):
                 payload = getPayload(value)
                 exploited = True
