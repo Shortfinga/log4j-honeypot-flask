@@ -125,8 +125,9 @@ def reportHit(request):
         for header in request.headers:
             report[header[0]] = str(header[1])
         if request.form.items():
-            for fieldname, value in request.form.items():
-                report[str(fieldname)] = report[str(value)]
+            report['fields'] = request.form.items()
+            #for fieldname, value in request.form.items():
+            #    report[str(fieldname)] = report[str(value)]
         report['src_ip'] = request.remote_addr
         report['timestamp'] = datetime.now().isoformat()
         report['sensor'] = config['DEFAULT']['name']
