@@ -11,6 +11,8 @@ import ldap
 import socket
 from typing import Any
 from datetime import datetime
+import uuid
+import logging
 
 def read_conf():
     config = configparser.ConfigParser()
@@ -61,7 +63,7 @@ def getPayload(request):
                                          )
                         if r.status_code == 200:
                             with open(
-                                    'payloads/' + str(connect['ip'][0]) + '_' + result_data[0][1]['javaFactory'][0].decode(
+                                    'payloads/' + str(connect['ip'][0]) + '_' + str(uuid.uuid4().hex[:8].lower()) + '_' + result_data[0][1]['javaFactory'][0].decode(
                                         'ascii') + '.class', 'wb') as f:
                                 for chunk in r:
                                     f.write(chunk)
@@ -141,6 +143,8 @@ def reportHit(request):
 
 
 app = Flask(__name__, template_folder='templates')
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 @app.route("/", methods=['POST', 'GET', 'PUT', 'DELETE'])
