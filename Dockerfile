@@ -9,7 +9,7 @@ WORKDIR /home/log4jhp
 RUN apt-get update -y && \
     apt-get install -y python3-pip python-dev
     
-RUN apt-get install -y build-essential python3-dev python2.7-dev libldap2-dev libsasl2-dev slapd ldap-utils tox lcov valgrind
+RUN DEBIAN_FRONTEND='noninteractive' apt-get install -y build-essential python3-dev python2.7-dev libldap2-dev libsasl2-dev slapd ldap-utils tox lcov valgrind
 
 # We copy just the requirements.txt first to leverage Docker cache
 COPY requirements.txt requirements.txt
