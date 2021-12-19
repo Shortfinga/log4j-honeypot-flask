@@ -12,6 +12,7 @@ import socket
 from typing import Any
 from datetime import datetime
 import uuid
+import logging
 
 def read_conf():
     config = configparser.ConfigParser()
@@ -142,6 +143,8 @@ def reportHit(request):
 
 
 app = Flask(__name__, template_folder='templates')
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 @app.route("/", methods=['POST', 'GET', 'PUT', 'DELETE'])
