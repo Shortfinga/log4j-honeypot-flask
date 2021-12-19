@@ -128,7 +128,7 @@ def reportHit(request):
             #cdict = {request.form.items().name: request.form.items().value for c in request.form.items()}
             #['fields'] = request.form.items()
             for fieldname, value in request.form.items():
-                report['field_' + str(fieldname)] = str(value)
+                report[fieldname] = str(value)
         report['src_ip'] = request.remote_addr
         report['timestamp'] = datetime.now().isoformat()
         report['sensor'] = config['DEFAULT']['name']
