@@ -2,6 +2,7 @@
 ip = 0.0.0.0
 port = 8080
 name = honeypot_1
+debug = false
 
 [ELASTICSEARCH]
 enabled = true
