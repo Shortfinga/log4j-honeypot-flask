@@ -157,7 +157,7 @@ def homepage():
             exploited = True
     if request.method == 'POST':
         for fieldname, value in request.form.items():
-            pprint.pprint(fiieldname + ': ' + value)
+            pprint.pprint(fieldname + ': ' + value)
             if re.search(regex, str(value)):
                 payload = getPayload(value)
                 exploited = True
