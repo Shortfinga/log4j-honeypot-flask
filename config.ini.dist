@@ -5,13 +5,15 @@ name = honeypot_1
 debug = false
 
 [ELASTICSEARCH]
-enabled = true
+enabled = false
 host =
 port =
 index = log4shell
 username = elastic
 password =
 pipeline = geoip
-type = _doc
-ssl = true
 verify_certs = true
+
+[JSONLogger]
+enabled = true
+file = log.json
