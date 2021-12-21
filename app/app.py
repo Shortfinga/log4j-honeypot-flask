@@ -1,43 +1,54 @@
-import pprint
+#!/usr/bin/env python3
 
-from flask import Flask, redirect, url_for, request, render_template
-import requests
-import json
-import os
-import re
-from elasticsearch import Elasticsearch, NotFoundError
-import configparser
-import ldap
-import socket
-from typing import Any
-from datetime import datetime
-import uuid
+"""log4j honeypot"""
+
+from configparser import ConfigParser
 import logging
+import re
+import uuid
+from datetime import datetime
+from typing import Any
 
-def read_conf():
-    config = configparser.ConfigParser()
-    if config.read('config.ini'):
-        return config
-    else:
-        return 0
+import ldap
+import requests
+from elasticsearch import Elasticsearch, NotFoundError
+from flask import Flask, redirect, render_template, request, url_for
+
+
+def read_conf() -> ConfigParser:
+    """read default config (config.ini.dist) and possible custom configs (config.ini)"""
+    config = ConfigParser()
+    config.read("config.ini.dist")
+    config.read("config.ini")
+    return config
 
 
 def getPayload(request):
     regex = re.compile(
-        r'(?:\${(j|\${::-j})(n|\${::-n})(d|\${::-d})(i|\${::-i}):((l|\${::-l})(d|\${::-d})(a|\${::-a})(p|\${::-p})|).*})'
+        r"(?:\${(j|\${::-j})(n|\${::-n})(d|\${::-d})(i|\${::-i}):((l|\${::-l})(d|\${::-d})(a|\${::-a})(p|\${::-p})|).*})"
     )
     m = re.match(regex, str(request))
     if m:
-        s = re.sub(
-            r'(?:\${(j|\${::-j})(n|\${::-n})(d|\${::-d})(i|\${::-i}):((l|\${::-l})(d|\${::-d})(a|\${::-a})(p|\${::-p})|))',
-            '', m.group(0)).replace('://', '').replace('}', '')
-        connect = {'ip': re.findall(r'[0-9]+(?:\.[0-9]+){3}', s),
-                   'port': re.findall(r'(?::[0-9]{1,5}\/)', s),
-                   'path': re.findall(r'(?:\/.{1,})', s)
-                   }
+        s = (
+            re.sub(
+                r"(?:\${(j|\${::-j})(n|\${::-n})(d|\${::-d})(i|\${::-i}):((l|\${::-l})(d|\${::-d})(a|\${::-a})(p|\${::-p})|))",
+                "",
+                m.group(0),
+            )
+            .replace("://", "")
+            .replace("}", "")
+        )
+        connect = {
+            "ip": re.findall(r"[0-9]+(?:\.[0-9]+){3}", s),
+            "port": re.findall(r"(?::[0-9]{1,5}\/)", s),
+            "path": re.findall(r"(?:\/.{1,})", s),
+        }
 
         try:
-            con = ldap.initialize("ldap://" + connect['ip'][0] + connect['port'][0].replace('/', ''), bytes_mode=False)
+            con = ldap.initialize(
+                "ldap://" + connect["ip"][0] + connect["port"][0].replace("/", ""),
+                bytes_mode=False,
+            )
         except:
             return 0
         else:
@@ -51,20 +62,32 @@ def getPayload(request):
             else:
                 search_scope = ldap.SCOPE_SUBTREE
                 try:
-                    msgid = con.search(connect['path'][0].strip("/"), search_scope)
+                    msgid = con.search(connect["path"][0].strip("/"), search_scope)
                 except:
                     return 0
                 else:
                     result_status, result_data = con.result(msgid, 0)
-                    if result_data[0][1]['javaCodeBase']:
-                        r = requests.get(result_data[0][1]['javaCodeBase'][0].decode('ascii').strip('/') + '/' +
-                                         result_data[0][1]['javaFactory'][0].decode('ascii') + '.class',
-                                         stream=True
-                                         )
+                    if result_data[0][1]["javaCodeBase"]:
+                        r = requests.get(
+                            result_data[0][1]["javaCodeBase"][0]
+                            .decode("ascii")
+                            .strip("/")
+                            + "/"
+                            + result_data[0][1]["javaFactory"][0].decode("ascii")
+                            + ".class",
+                            stream=True,
+                        )
                         if r.status_code == 200:
                             with open(
-                                    'payloads/' + str(connect['ip'][0]) + '_' + str(uuid.uuid4().hex[:8].lower()) + '_' + result_data[0][1]['javaFactory'][0].decode(
-                                        'ascii') + '.class', 'wb') as f:
+                                "payloads/"
+                                + str(connect["ip"][0])
+                                + "_"
+                                + str(uuid.uuid4().hex[:8].lower())
+                                + "_"
+                                + result_data[0][1]["javaFactory"][0].decode("ascii")
+                                + ".class",
+                                "wb",
+                            ) as f:
                                 for chunk in r:
                                     f.write(chunk)
                                 f.close()
@@ -112,74 +135,90 @@ def check_index(es, index):
 
 def reportHit(request):
     config = read_conf()
-    if config['ELASTICSEARCH']['enabled'] == "true":
+    if config["ELASTICSEARCH"]["enabled"] == "true":
         options: dict[str, Any] = {}
-        options["http_auth"] = (config['ELASTICSEARCH']['username'], config['ELASTICSEARCH']['password'])
+        options["http_auth"] = (
+            config["ELASTICSEARCH"]["username"],
+            config["ELASTICSEARCH"]["password"],
+        )
         options["scheme"] = "https"
         options["use_ssl"] = True
         options["ssl_show_warn"] = False
         options["verify_certs"] = False
-        es = Elasticsearch(f"{config['ELASTICSEARCH']['host']}:{config['ELASTICSEARCH']['port']}", **options)
-        check_index(es, config['ELASTICSEARCH']['index'])
-        check_geoip_mapping(es, config['ELASTICSEARCH']['index'])
-        check_geoip_pipeline(es, config['ELASTICSEARCH']['pipeline'])
+        es = Elasticsearch(
+            f"{config['ELASTICSEARCH']['host']}:{config['ELASTICSEARCH']['port']}",
+            **options,
+        )
+        check_index(es, config["ELASTICSEARCH"]["index"])
+        check_geoip_mapping(es, config["ELASTICSEARCH"]["index"])
+        check_geoip_pipeline(es, config["ELASTICSEARCH"]["pipeline"])
         report = {}
         for header in request.headers:
             report[header[0]] = str(header[1])
         if request.form.items():
-            #cdict = {request.form.items().name: request.form.items().value for c in request.form.items()}
-            #['fields'] = request.form.items()
+            # cdict = {request.form.items().name: request.form.items().value for c in request.form.items()}
+            # ['fields'] = request.form.items()
             for fieldname, value in request.form.items():
                 report[fieldname] = str(value)
-        report['src_ip'] = request.remote_addr
-        report['timestamp'] = datetime.now().isoformat()
-        report['sensor'] = config['DEFAULT']['name']
-        report['full_path'] = request.full_path
+        report["src_ip"] = request.remote_addr
+        report["timestamp"] = datetime.now().isoformat()
+        report["sensor"] = config["DEFAULT"]["name"]
+        report["full_path"] = request.full_path
 
         es.index(
-            index=config['ELASTICSEARCH']['index'], doc_type='_doc', document=report, pipeline=config['ELASTICSEARCH']['pipeline']
+            index=config["ELASTICSEARCH"]["index"],
+            doc_type="_doc",
+            document=report,
+            pipeline=config["ELASTICSEARCH"]["pipeline"],
         )
     return 0
 
 
-app = Flask(__name__, template_folder='templates')
-log = logging.getLogger('werkzeug')
+app = Flask(__name__, template_folder="templates")
+log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 
 
-@app.route("/", methods=['POST', 'GET', 'PUT', 'DELETE'])
+@app.route("/", methods=["POST", "GET", "PUT", "DELETE"])
 def homepage():
     exploited = False
-    regex = re.compile(r'^\${*')
+    regex = re.compile(r"^\${*")
     for var in request.args:
         if re.search(regex, str(request.args.get(var))):
             getPayload(request.args.get(var))
             exploited = True
     for header in request.headers:
-        #pprint.pprint(header)
+        # pprint.pprint(header)
         if re.search(regex, str(header[1])):
             getPayload(header[1])
             exploited = True
-    if request.method == 'POST':
+    if request.method == "POST":
         for fieldname, value in request.form.items():
-            #pprint.pprint(fieldname + ': ' + value)
+            # pprint.pprint(fieldname + ': ' + value)
             if re.search(regex, str(value)):
                 payload = getPayload(value)
                 exploited = True
         if exploited:
             reportHit(request)
-        return (
-            "<html><head><title>Login Failed</title></head><body><h1>Login Failed</h1><br/><a href='/'>Try again</a></body></html>")
+        return "<html><head><title>Login Failed</title></head><body><h1>Login Failed</h1><br/><a href='/'>Try again</a></body></html>"
     else:
         if exploited:
             reportHit(request)
-            return render_template('uwu.html')
-        return render_template('index.html')
+            return render_template("uwu.html")
+        return render_template("index.html")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     config = read_conf()
-    if config['DEFAULT']['debug'] == 'false':
-        app.run(debug=False, host=config['DEFAULT']['ip'], port=int(config['DEFAULT']['port']))
+    if config["DEFAULT"]["debug"] == "false":
+        app.run(
+            debug=False,
+            host=config["DEFAULT"]["ip"],
+            port=int(config["DEFAULT"]["port"]),
+        )
     else:
-        app.run(debug=True, host=config['DEFAULT']['ip'], port=int(config['DEFAULT']['port']))
+        app.run(
+            debug=True,
+            host=config["DEFAULT"]["ip"],
+            port=int(config["DEFAULT"]["port"]),
+        )
