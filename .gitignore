@@ -154,5 +154,6 @@ venv/
 .venv/
 songs/
 dist/
-payloads/
+payloads/*
 config.ini
+log.json
