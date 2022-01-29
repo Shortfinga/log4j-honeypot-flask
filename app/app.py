@@ -243,9 +243,7 @@ def download_thirdstage(url: ThirdStageURL) -> None:
         return
 
     dest_path = (
-        Path("payloads")
-        / datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        / f"{uuid.uuid4()}.class"
+        Path("payloads") / datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + f"{uuid.uuid4()}.class"
     )
     with dest_path.open("wb") as dest_file:
         for chunk in response.iter_content(1024):

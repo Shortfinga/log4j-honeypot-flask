@@ -6,6 +6,5 @@ services:
     ports:
       - '80:8080'
     volumes:
-      - './log.json:/honeypot/log.json'
-      - './payloads.json:/honeypot/payloads'
+      - './payloads:/honeypot/payloads'
     restart: unless-stopped

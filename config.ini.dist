@@ -16,4 +16,4 @@ verify_certs = true
 
 [JSONLogger]
 enabled = true
-file = log.json
+file = payloads/log.json

@@ -22,6 +22,12 @@ pipenv install
 pipenv run gunicorn
 ```
 
+I ran into trouble with Arch recently, and found this [workaround](https://github.com/python-ldap/python-ldap/issues/432#issuecomment-974799221).
+
+    # cat > /usr/lib64/libldap_r.so << EOF
+    INPUT ( libldap.so )
+    EOF
+
 # Running Docker
 
 ```
